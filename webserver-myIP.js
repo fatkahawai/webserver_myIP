@@ -7,6 +7,9 @@
  * a server-side application running a node/express Webserver and a mongo DB
  * Uses the Express and Mongoose node packages.
  *
+ * test a POST using curl -X POST "<my EC2 webserver URL>:8080/activity?activity=101"
+ * test a GET using browser - open <URL>:8080 to get all records
+ *                            open <URL>:8080/activity to get most recently stored record
  *
  * @throws none
  * @see nodejs.org
@@ -23,7 +26,7 @@ var express = require('express');
 
 var app = express();
 
-var dbPath = 'mongodb://localhost/myipdb';
+var dbPath = 'mongodb://localhost/mydb';
 
 var db;              // our MongoDb database
 
@@ -34,7 +37,7 @@ var MyModel;        // our mongoose Model
 mySchema = mongoose.Schema({
     timestamp: {type: Date, default: Date.now},
     ipAddress: String,
-    activity: Number
+    activity: {type: Number, default: 0}
 });
 // create our model using this schema
 MyModel = mongoose.model('MyModel', mySchema);
@@ -79,8 +82,8 @@ mongoose.connection.once('open', function () {
 
   // search if a MyModel has already been saved in our db
   MyModel.find( function(err, records){
-    if( err || !records ){
-      console.log('error searching for records in Db' );
+    if( err ){
+      console.log('error searching for records in Db '+ err );
     }
     else if( records.length>0 ){ // at least one MyModel records already exists in our db. we can use that
       console.log(records.length+' records already exist in DB' );
@@ -103,7 +106,7 @@ mongoose.connection.once('open', function () {
 app.get('/', function(req, res){
   var records;
 
-  console.log('received client GET request for all records');
+  console.log('\nreceived client GET request for all records');
   if( !MyModel ){
     console.log('Database not ready');
   }
@@ -129,10 +132,10 @@ app.get('/', function(req, res){
 
 // -----------------------------
 // GET most recent saved record
-app.get('/record', function(req, res){
+app.get('/activity', function(req, res){
   var record;
 
-  console.log('received client GET request for most recently saved record');
+  console.log('\nreceived client GET request for most recently saved record');
   if( !MyModel ) {
     console.log('Database not ready');
   }
@@ -158,21 +161,29 @@ app.get('/record', function(req, res){
 
 // ------------------------------
 // POST a new entry
-app.post('/', function(req, res){
+app.post('/activity', function(req, res){
   var records;
 
-  console.log('received client POST request from '+req.connection.remoteAddress);
+  console.log('\nreceived client POST request from '+req.connection.remoteAddress+' with activity params '+req.query.activity);
+  console.log('URL:\n'+req.originalUrl);
+  console.log('params:\n'+JSON.stringify(req.params));
+  console.log('query:\n'+JSON.stringify(req.query));
+  console.log('body:\n'+JSON.stringify(req.body));
+
   if ( !MyModel ) {
     console.log('Database not ready');
   }
-  MyModel = new MyModel({ ipAddress: req.connection.remoteAddress, activity: req.param('activity') });
-  MyModel.save (function (err) {
+  newEntry = new MyModel({ ipAddress: req.connection.remoteAddress, activity: req.query.activity });
+  console.log('creating new Db entry '+ newEntry);
+
+  newEntry.save (function (err) {
         if ( err ){ //  handle the error
           res.send(501,'application save error');
           console('couldnt save a new record to the Db');
         }
         else{
-          console.log('new record from '+MyModel.ipAddress+' was successfully saved to Db' );
+          console.log('new record from '+newEntry.ipAddress+' was successfully saved to Db' );
+          res.send(JSON.stringify(newEntry));
 
           MyModel.find( function(err, records){
             if( records ) {
