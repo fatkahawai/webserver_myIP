@@ -195,6 +195,18 @@ app.post('/activity', function(req, res){
   }); // MyModel.save()
 }); // apt.post()
 
+// ------------------------------
+// POST a new entry
+app.post('/ip', function(req, res){
+  var records;
+
+  console.log('\nreceived client POST request from '+req.connection.remoteAddress+' with local ip address '+req.query.address);
+  console.log('URL:\n'+req.originalUrl);
+  console.log('params:\n'+JSON.stringify(req.params));
+  console.log('query:\n'+JSON.stringify(req.query));  
+
+}); // apt.post()
+
 //
 // Express route to handle errors
 //
