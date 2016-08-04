@@ -37,7 +37,8 @@ var MyModel;        // our mongoose Model
 mySchema = mongoose.Schema({
     timestamp: {type: Date, default: Date.now},
     ipAddress: String,
-    activity: {type: Number, default: 0}
+    activity: String,
+    code: {type: Number, default: 0}
 });
 // create our model using this schema
 MyModel = mongoose.model('MyModel', mySchema);
@@ -106,7 +107,7 @@ mongoose.connection.once('open', function () {
 app.get('/', function(req, res){
   var records;
 
-  console.log('\nreceived client GET request for all records');
+  console.log('\nreceived client GET request for all records from '+req.connection.remoteAddress);
   if( !MyModel ){
     console.log('Database not ready');
   }
@@ -135,7 +136,7 @@ app.get('/', function(req, res){
 app.get('/activity', function(req, res){
   var record;
 
-  console.log('\nreceived client GET request for most recently saved record');
+  console.log('\nreceived client GET request for most recently saved record from '+req.connection.remoteAddress);
   if( !MyModel ) {
     console.log('Database not ready');
   }
@@ -164,17 +165,17 @@ app.get('/activity', function(req, res){
 app.post('/activity', function(req, res){
   var records;
 
-  console.log('\nreceived client POST request from '+req.connection.remoteAddress+' with activity params '+req.query.activity);
+  console.log('\nreceived client POST request from '+req.connection.remoteAddress+' with activity '+req.query.activity);
   console.log('URL:\n'+req.originalUrl);
   console.log('params:\n'+JSON.stringify(req.params));
   console.log('query:\n'+JSON.stringify(req.query));
-  console.log('body:\n'+JSON.stringify(req.body));
+//  console.log('body:\n'+JSON.stringify(req.body));
 
   if ( !MyModel ) {
     console.log('Database not ready');
   }
-  newEntry = new MyModel({ ipAddress: req.connection.remoteAddress, activity: req.query.activity });
-  console.log('creating new Db entry '+ newEntry);
+  newEntry = new MyModel({ ipAddress: req.connection.remoteAddress, activity: req.query.activity, code: req.query.code });
+  console.log('creating new Db entry '+ JSON.stringify(newEntry));
 
   newEntry.save (function (err) {
         if ( err ){ //  handle the error
