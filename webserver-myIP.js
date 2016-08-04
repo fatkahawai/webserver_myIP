@@ -205,6 +205,7 @@ app.post('/ip', function(req, res){
   console.log('params:\n'+JSON.stringify(req.params));
   console.log('query:\n'+JSON.stringify(req.query));  
 
+  res.sendStatus(200);
 }); // apt.post()
 
 //
